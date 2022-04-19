@@ -1,137 +1,24 @@
-# TensorFlow Lite Object Detection Android Demo
+# 머신러닝을 활용한 점적통 실시간 추적 시스템
 
-### Overview
+## 요약
+ 이 연구에서는 모바일 장치를 활용하여 다양한 환경에서 점적통의 수액 낙하를 효과적으로 인식하기 위해서 점적통 객체 탐지 모델을 생성하였다. 다양한 배경의 점적통 사진을 수집하고 이를 바탕으로 점적통의 범위 지정을 통한 라벨링을 하여 TF lite model maker의 학습 데이터로 사용하였다. 생성한 모델을 TF Lite에 적용하여 다양한 환경에서 실험한 결과 손 떨림과 다양한 주변환경 같은 노이즈에서 높은 인식율을 보여주는 것을 확인할 수 있었다. 이 실험의 결과는 점적통 내 수액 낙하를 위한 관심영역 설정에 활용될 수 있을 것으로 판단된다.
+ 
+ ## 연구 과정
+ 
+1. 데이터 수집<br>
+ 거리와 배경이 다른 환경에서 촬영한 79개의 영상에서 1,307개의 사진 데이터를 추출하였다.
 
-This is a camera app that continuously detects the objects (bounding boxes and
-classes) in the frames seen by your device's back camera, using a quantized
-[MobileNet SSD](https://github.com/tensorflow/models/tree/master/research/object_detection)
-model trained on the [COCO dataset](http://cocodataset.org/). These instructions
-walk you through building and running the demo on an Android device.
+2. 라벨링<br>
+LabelImg를 이용하여 사진 데이터에서 점적통의 범위를 지정하였으며, 객체의 이름은 Chamber로 설정하였다. 라벨링이 완료된 데이터는 PascalVOC형식의 XML파일로 변환하였다.
 
-The model files are downloaded via Gradle scripts when you build and run. You
-don't need to do any steps to download TFLite models into the project
-explicitly.
+3. 학습모델 생성<br>
+tensorflow lite model maker를 이용하여 tflite모델을 생성하였다. 1,307개의 사진데이터 중 train은 1,110개, validate는 130개, test로 67개의 데이터를 이용하였다.
 
-Application can run either on device or emulator.
+![image](https://user-images.githubusercontent.com/80963996/164041135-1ffb2f46-10a2-4c38-b999-171368bcc049.png)<br>
+[loss 변화량]
 
-<!-- TODO(b/124116863): Add app screenshot. -->
+4. 모델 적용 및 실행<br>
+TFLite Object Detection에 생성한 Chamber.tflite를 삽입한다. 이후 깔끔한 배경 2개와 복잡한 배경 2개의 배경에서 거리와 움직임을 변화하며 인식의 정확도를 실험하였다.
 
-## Build the demo using Android Studio
-
-### Prerequisites
-
-*   If you don't have already, install
-    **[Android Studio](https://developer.android.com/studio/index.html)**,
-    following the instructions on the website.
-
-*   You need an Android device and Android development environment with minimum
-    API 21.
-
-*   Android Studio 3.2 or later.
-
-### Building
-
-*   Open Android Studio, and from the Welcome screen, select Open an existing
-    Android Studio project.
-
-*   From the Open File or Project window that appears, navigate to and select
-    the tensorflow-lite/examples/object_detection/android directory from
-    wherever you cloned the TensorFlow Lite sample GitHub repo. Click OK.
-
-*   If it asks you to do a Gradle Sync, click OK.
-
-*   You may also need to install various platforms and tools, if you get errors
-    like "Failed to find target with hash string 'android-21'" and similar.
-    Click the `Run` button (the green arrow) or select `Run > Run 'android'`
-    from the top menu. You may need to rebuild the project using `Build >
-    Rebuild` Project.
-
-*   If it asks you to use Instant Run, click Proceed Without Instant Run.
-
-*   Also, you need to have an Android device plugged in with developer options
-    enabled at this point. See
-    **[here](https://developer.android.com/studio/run/device)** for more details
-    on setting up developer devices.
-
-#### Switch between inference solutions (Task library vs TFLite Interpreter)
-
-This object detection Android reference app demonstrates two implementation
-solutions:
-
-(1)
-[`lib_task_api`](https://github.com/tensorflow/examples/tree/master/lite/examples/nl_classification/android/lib_task_api)
-that leverages the out-of-box API from the
-[TensorFlow Lite Task Library](https://www.tensorflow.org/lite/inference_with_metadata/task_library/object_detector);
-
-(2)
-[`lib_interpreter`](https://github.com/tensorflow/examples/tree/master/lite/examples/text_classification/android/lib_interpreter)
-that creates the custom inference pipleline using the
-[TensorFlow Lite Interpreter Java API](https://www.tensorflow.org/lite/guide/inference#load_and_run_a_model_in_java).
-
-The [`build.gradle`](app/build.gradle) inside `app` folder shows how to change
-`flavorDimensions "tfliteInference"` to switch between the two solutions.
-
-Inside **Android Studio**, you can change the build variant to whichever one you
-want to build and run—just go to `Build > Select Build Variant` and select one
-from the drop-down menu. See
-[configure product flavors in Android Studio](https://developer.android.com/studio/build/build-variants#product-flavors)
-for more details.
-
-For gradle CLI, running `./gradlew build` can create APKs for both solutions
-under `app/build/outputs/apk`.
-
-*Note: If you simply want the out-of-box API to run the app, we recommend
-`lib_task_api` for inference. If you want to customize your own models and
-control the detail of inputs and outputs, it might be easier to adapt your model
-inputs and outputs by using `lib_interpreter`.*
-
-### Model used
-
-Downloading, extraction and placing it in assets folder has been managed
-automatically by download.gradle.
-
-If you explicitly want to download the model, you can download from
-**[here](http://storage.googleapis.com/download.tensorflow.org/models/tflite/coco_ssd_mobilenet_v1_1.0_quant_2018_06_29.zip)**.
-Extract the zip to get the .tflite and label file.
-
-### Custom model used
-
-This example shows you how to perform TensorFlow Lite object detection using a
-custom model. * Clone the TensorFlow models GitHub repository to your computer.
-`git clone https://github.com/tensorflow/models/` * Build and install this
-repository. `cd models/research python3 setup.py build && python3 setup.py
-install` * Download the MobileNet SSD trained on
-**[Open Images v4](https://storage.googleapis.com/openimages/web/factsfigures_v4.html)**
-**[here](https://github.com/tensorflow/models/blob/master/research/object_detection/g3doc/tf1_detection_zoo.md)**.
-Extract the pretrained TensorFlow model files. * Go to `models/research`
-directory and execute this code to get the frozen TensorFlow Lite graph.
-`python3 object_detection/export_tflite_ssd_graph.py \ --pipeline_config_path
-object_detection/samples/configs/ssd_mobilenet_v2_oid_v4.config \
---trained_checkpoint_prefix <directory with
-ssd_mobilenet_v2_oid_v4_2018_12_12>/model.ckpt \ --output_directory
-exported_model` * Convert the frozen graph to the TFLite model. `tflite_convert
-\ --input_shape=1,300,300,3 \ --input_arrays=normalized_input_image_tensor \
---output_arrays=TFLite_Detection_PostProcess,TFLite_Detection_PostProcess:1,TFLite_Detection_PostProcess:2,TFLite_Detection_PostProcess:3
-\ --allow_custom_ops \ --graph_def_file=exported_model/tflite_graph.pb \
---output_file=<directory with the TensorFlow examples
-repository>/lite/examples/object_detection/android/app/src/main/assets/detect.tflite`
-`input_shape=1,300,300,3` because the pretrained model works only with that
-input shape.
-
-`allow_custom_ops` is necessary to allow TFLite_Detection_PostProcess operation.
-
-`input_arrays` and `output_arrays` can be drawn from the visualized graph of the
-example detection model. `bazel run //tensorflow/lite/tools:visualize \
-"<directory with the TensorFlow examples
-repository>/lite/examples/object_detection/android/app/src/main/assets/detect.tflite"
-\ detect.html`
-
-*   Get `labelmap.txt` from the second column of
-    **[class-descriptions-boxable](https://storage.googleapis.com/openimages/2018_04/class-descriptions-boxable.csv)**.
-*   In `DetectorActivity.java` set `TF_OD_API_IS_QUANTIZED` to `false`.
-
-### Additional Note
-
-_Please do not delete the assets folder content_. If you explicitly deleted the
-files, then please choose *Build*->*Rebuild* from menu to re-download the
-deleted model files into assets folder.
+5. 결과<br>
+적당한 거리에서 큰 움직임없이 인식한 경우, 배경에 상관없이 대부분의 시간동안 최고 정확률을 유지하여 99.61%의 정확도를 보였다. 가까운 거리의 경우 점적통이 가까이에 있어 초점이 맞지 않을 경우 정확률이 떨어져서 전체적인 정확률도 낮아진 것을 확인할 수 있다. 먼 거리에서는, 점적통이 작게 보여 인식 정확도는 조금 떨어졌다. 움직이면서 인식할 때는 복잡한 배경일 때는 정확률이 떨어지는 경향을 보였으나 96%이상의 정확률을 보이면서 움직임이 있을 때에도 실시간으로 정확히 추적이 가능한 것을 확인하였다.
